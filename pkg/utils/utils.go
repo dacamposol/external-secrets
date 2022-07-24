@@ -24,6 +24,7 @@ import (
 	"net"
 	"net/url"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -38,6 +39,34 @@ func MergeByteMap(dst, src map[string][]byte) map[string][]byte {
 		dst[k] = v
 	}
 	return dst
+}
+
+func RewriteMap(operations []esv1beta1.ExternalSecretRewrite, in map[string][]byte) (map[string][]byte, error) {
+	out := in
+	var err error
+	for i, op := range operations {
+		if op.Regexp != nil {
+			out, err = RewriteRegexp(*op.Regexp, out)
+			if err != nil {
+				return nil, fmt.Errorf("failed rewriting operation[%v]: %w", i, err)
+			}
+		}
+	}
+	return out, nil
+}
+
+// RewriteRegexp rewrites a single Regexp Rewrite Operation.
+func RewriteRegexp(operation esv1beta1.ExternalSecretRewriteRegexp, in map[string][]byte) (map[string][]byte, error) {
+	out := make(map[string][]byte)
+	re, err := regexp.Compile(operation.Source)
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range in {
+		newKey := re.ReplaceAllString(key, operation.Target)
+		out[newKey] = value
+	}
+	return out, nil
 }
 
 // DecodeValues decodes values from a secretMap.

@@ -212,8 +212,6 @@ const (
 	ExternalSecretDecodeNone      ExternalSecretDecodingStrategy = "None"
 )
 
-// +kubebuilder:validation:MinProperties=1
-// +kubebuilder:validation:MaxProperties=1
 type ExternalSecretDataFromRemoteRef struct {
 	// Used to extract multiple key/value pairs from one secret
 	// +optional
@@ -221,8 +219,24 @@ type ExternalSecretDataFromRemoteRef struct {
 	// Used to find secrets based on tags or regular expressions
 	// +optional
 	Find *ExternalSecretFind `json:"find,omitempty"`
+
+	// Used to rewrite secret Keys after getting them from the secret Provider
+	// +optional
+	Rewrite []ExternalSecretRewrite `json:"rewrite,omitempty"`
 }
 
+type ExternalSecretRewrite struct {
+	// Rewrite using regular expressions
+	// +optional
+	Regexp *ExternalSecretRewriteRegexp `json:"regexp,omitempty"`
+}
+
+type ExternalSecretRewriteRegexp struct {
+	// Regular expression to use as a re.Compiler.
+	Source string `json:"source"`
+	// Target output for a replace operation.
+	Target string `json:"target"`
+}
 type ExternalSecretFind struct {
 	// A root path to start the find operations.
 	// +optional

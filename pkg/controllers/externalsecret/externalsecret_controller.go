@@ -51,6 +51,7 @@ const (
 	errGetES                 = "could not get ExternalSecret"
 	errConvert               = "could not apply conversion strategy to keys: %v"
 	errDecode                = "could not apply decoding strategy to %v[%d]: %v"
+	errRewrite               = "could not rewrite spec.dataFrom[%d]: %v"
 	errUpdateSecret          = "could not update Secret"
 	errPatchStatus           = "unable to patch status"
 	errGetSecretStore        = "could not get SecretStore %q, %w"
@@ -559,7 +560,10 @@ func (r *Reconciler) getProviderSecretData(ctx context.Context, providerClient e
 				return nil, fmt.Errorf(errDecode, "spec.dataFrom", i, err)
 			}
 		}
-
+		secretMap, err = utils.RewriteMap(remoteRef.Rewrite, secretMap)
+		if err != nil {
+			return nil, fmt.Errorf(errRewrite, i, err)
+		}
 		providerData = utils.MergeByteMap(providerData, secretMap)
 	}
 
